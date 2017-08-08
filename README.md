@@ -14,15 +14,17 @@ static void cb_need_data (GstElement *appsrc){
 }
 ```
 when I read the function in detail, this is the description,
-'''
+
+>
 Decreases the refcount of the buffer. If the refcount reaches 0, the buffer will be freed.
 If GST_BUFFER_MALLOCDATA() is non-NULL, this pointer will also be freed at this time.
-'''
-which means that when I called the function, the ref count off buffer decreases by 1? so the failed reason is that the original ref count is more than 1?
 
-read the source:
 Buffers are usually freed by unreffing them with gst_buffer_unref(). When the refcount drops to 0, any memory and metadata pointed to by the buffer is
 unreffed as well. Buffers allocated from a #GstBufferPool will be returned to the pool when the refcount drops to 0.
+
+which means that when I called the function, the ref count of buffer decreases by 1, so the failed reason maybe the original ref count is more than 1?
+
+
 
 gst_buffer_unref() called gst_mini_object_unref() in gstminiobject.c, implement as following
 ```
@@ -71,16 +73,10 @@ gst_mini_object_unref (GstMiniObject * mini_object)
 }
 
 ```
-however, when I print the ref count out, the number is 2, but the second gst_buffer_unref() throws an assertion error:
-(sender_with_callback:9043): GStreamer-CRITICAL **: gst_mini_object_unref: assertion 'mini_object->refcount > 0' failed
+However, when I print the ref count out, the number is 2, but the second gst_buffer_unref() throws an assertion error:
+*(sender_with_callback:9043): GStreamer-CRITICAL : gst_mini_object_unref: assertion 'mini_object->refcount > 0' failed*， which means it's called in somewhere, but the memory it used is not been returned. 
 something happened?
-```
-std::cout << GST_MINI_OBJECT_CONST_CAST (buffer)->refcount << std::endl;
- while(GST_MINI_OBJECT_CONST_CAST (buffer)->refcount > 0){
-    gst_buffer_unref (buffer);
- }
- ```
-in more detail,
+
 ```
 buffer = gst_buffer_new_allocate (NULL, size, NULL);
 gst_buffer_map (buffer, &map, GST_MAP_WRITE);
@@ -89,7 +85,16 @@ GST_BUFFER_PTS (buffer) = timestamp;
 GST_BUFFER_DURATION (buffer) = gst_util_uint64_scale_int (1, GST_SECOND, 30);
 timestamp += GST_BUFFER_DURATION (buffer); // ref count is 1
 g_signal_emit_by_name (appsrc, "push-buffer", buffer, &ret); // ref count is 2
+gst_buffer_unref(buffer); // ref count is 1
 
 ```
 
-** the only solution is to use buffer as global variable **
+**current solution is to use buffer as global variable**
+
+2. latency
+When use command line of gst-launch, the video stream is in real time, but when using gst to send stream, there has latency of about 2s, which is boring!
+This problem is to be fixed.
+
+3. opencv videowriter write to gstremaer
+It's possible in theory, but I haven't try it out.
+Todo
