@@ -1,4 +1,8 @@
 # Gstreamer Usage Example
+This repo provides some code to combine opencv and gstreamer-1.0 to write frames to client ip and port. 
+- "scripts" : the commands you can use in command line directly. 
+- "senders" : different ways to push data to pipeline, with callback or loop
+- "gst-parse-launch" : use gst-parse-launch() function to build pipeline
 
 ## Issues
 ### out of memory
