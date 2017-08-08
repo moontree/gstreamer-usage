@@ -1,7 +1,8 @@
 # Gstreamer Usage Example
 
 ## Issues
-1. gst_buffer_ref() seems not work correctly or something else causes memory increase all the time, in the original example, buffer is created and allocated in the loop/ callback function,
+### out of memory
+gst_buffer_ref() seems not work correctly or something else causes memory increase all the time, in the original example, buffer is created and allocated in the loop/ callback function,
 and released after data in buffer has been pushed, as following
 ```
 static void cb_need_data (GstElement *appsrc){
@@ -91,10 +92,10 @@ gst_buffer_unref(buffer); // ref count is 1
 
 **current solution is to use buffer as global variable**
 
-2. latency
+### latency
 When use command line of gst-launch, the video stream is in real time, but when using gst to send stream, there has latency of about 2s, which is boring!
 This problem is to be fixed.
 
-3. opencv videowriter write to gstremaer
+### opencv videowriter write to gstremaer
 It's possible in theory, but I haven't try it out.
 Todo
