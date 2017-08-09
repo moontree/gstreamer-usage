@@ -100,6 +100,42 @@ gst_buffer_unref(buffer); // ref count is 1
 When use command line of gst-launch, the video stream is in real time, but when using gst to send stream, there has latency of about 2s, which is boring!
 This problem is to be fixed.
 
+2017-08-09 updated:
+Converting gst-launch commands ```x264enc noise-reduction=10000 speed-preset=fast tune=zerolatency byte-stream=true threads=4 key-int-max=15 intra-refresh=true``` into C code, I got warnings as following:
+```
+(sender_with_loop:30064): GLib-GObject-WARNING **: value "((GstX264EncTune) 4207584)" of type 'GstX264EncTune' is invalid or out of range for property 'tune' of type 'GstX264EncTune'
+
+(sender_with_loop:30064): GLib-GObject-WARNING **: value "((GstX264EncPreset) 4207635)" of type 'GstX264EncPreset' is invalid or out of range for property 'speed-preset' of type 'GstX264EncPreset'
+```
+It seems that the value of properties is not right, and thanks to ![http://gstreamer-devel.966125.n4.nabble.com/gst-inspect-and-g-object-set-for-properties-td4674350.html], I can use `gst-inspect-1.0 element` to get element properties and the values, 
+```
+gst-inspect-1.0 x264enc
+
+speed-preset        : Preset name for speed/quality tradeoff options (can affect decode compatibility - impose restrictions separately for your target decoder)
+                        flags: readable, writable
+                        Enum "GstX264EncPreset" Default: 6, "medium"
+                           (0): None             - No preset
+                           (1): ultrafast        - ultrafast
+                           (2): superfast        - superfast
+                           (3): veryfast         - veryfast
+                           (4): faster           - faster
+                           (5): fast             - fast
+                           (6): medium           - medium
+                           (7): slow             - slow
+                           (8): slower           - slower
+                           (9): veryslow         - veryslow
+                           (10): placebo          - placebo
+
+tune                : Preset name for non-psychovisual tuning options
+                        flags: readable, writable
+                        Flags "GstX264EncTune" Default: 0x00000000, "(none)"
+                           (0x00000001): stillimage       - Still image
+                           (0x00000002): fastdecode       - Fast decode
+                           (0x00000004): zerolatency      - Zero latency
+
+```
+As a result, using g_object_set(x264enc, "speed-preset", 5, "tune", 4, NULL) can remove latency.
+
 ### opencv videowriter write to gstremaer
 It's possible in theory, but I haven't try it out.
 Todo
