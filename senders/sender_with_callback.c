@@ -55,11 +55,11 @@ gint main (gint   argc, gchar *argv[]){
   rtppay = gst_element_factory_make ("rtph264pay", "rtppay");
   udpsink = gst_element_factory_make ("udpsink", "sink");
 
-  g_object_set( encoder, "tune", "zerolatency",
+  g_object_set( encoder, "tune", 4,
   "threads", 4,
   "key-int-max", 15,
   "intra-refresh", true,
-  "speed-preset", "fase",
+  "speed-preset", 5,
   NULL);
   g_object_set( udpsink, "host", "10.99.40.255", NULL );
   g_object_set( udpsink, "port", 5000, NULL );

@@ -24,11 +24,11 @@ gint main (gint   argc, gchar *argv[]){
   udpsink = gst_element_factory_make ("udpsink", "sink");
 
   static GstClockTime timestamp = 0;
-  g_object_set( encoder, "tune", "zerolatency", NULL );
+  g_object_set( encoder, "tune", 4, NULL );
   g_object_set( encoder, "threads", 4, NULL );
   g_object_set( encoder, "key-int-max", 15, NULL );
   g_object_set( encoder, "intra-refresh", true, NULL );
-  g_object_set( encoder, "speed-preset", "fast", NULL );
+  g_object_set( encoder, "speed-preset", 3, NULL );
   g_object_set( udpsink, "host", "10.99.40.255", NULL );
   g_object_set( udpsink, "port", 5000, NULL );
   g_object_set( udpsink, "sync", false, NULL );
