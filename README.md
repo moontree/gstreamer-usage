@@ -136,6 +136,38 @@ tune                : Preset name for non-psychovisual tuning options
 ```
 As a result, using g_object_set(x264enc, "speed-preset", 5, "tune", 4, NULL) can remove latency.
 
-### opencv videowriter write to gstremaer
+### Fix bug : Gstreamer-Critical ** write map requested on non-writable buffer
+Sometimes, gstreamer will generate error called " write map requested on non-writable buffer".
+In fact, this is a strange bug. According to the doc of [gst-buffer](https://developer.gnome.org/gstreamer/stable/gstreamer-GstBuffer.html#gst-buffer-unref), It should not cause segement fault, but it does!
+>```
+gboolean
+gst_buffer_map (GstBuffer *buffer,
+                GstMapInfo *info,
+                GstMapFlags flags);
+
+>```
+>This function fills info with the GstMapInfo of all merged memory blocks in buffer .
+
+>flags describe the desired access of the memory. When flags is GST_MAP_WRITE, buffer should be writable (as returned from gst_buffer_is_writable()).
+
+>When buffer is writable but the memory isn't, a writable copy will automatically be created and returned. The readonly copy of the buffer memory will then also be replaced with this writable copy.
+
+>The memory in info should be unmapped with gst_buffer_unmap() after usage.
+
+To deal with this problem, check the APIs, `gst_buffer_is_writable()` can get the writable status of buffer, and `gst_buffer_make_writable()` makes a writable buffer from the given buffer.
+> If the source buffer is already writable, this will simply return the same buffer. A copy will otherwise be made using gst_buffer_copy().
+
+So it should be `buffer = gst_buffer_make_writable(buffer)?
+
+Or just release the old buffer and make a new buffer, just as the method in code:
+```
+if(!gst_buffer_is_writable(buffer)){
+	gst_buffer_unref(buffer);
+	buffer = gst_buffer_new_allocate (NULL, 640*360*3, NULL);
+}
+```
+
+
+### opencv videowriter write to gstreamer
 It's possible in theory, but I haven't try it out.
 Todo

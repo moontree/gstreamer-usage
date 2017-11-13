@@ -71,11 +71,17 @@ gint main (gint   argc, gchar *argv[]){
       data1 = (guchar *)img->imageData;
       size = height*width*channels;
       gst_buffer_map (buffer, &map, GST_MAP_WRITE);
-      memcpy( (guchar *)map.data, data1,  gst_buffer_get_size( buffer ) );
-      GST_BUFFER_PTS (buffer) = timestamp;
-      GST_BUFFER_DURATION (buffer) = gst_util_uint64_scale_int (1, GST_SECOND, 30);
-      timestamp += GST_BUFFER_DURATION (buffer);
-      g_signal_emit_by_name (appsrc, "push-buffer", buffer, &ret);
+      if (gst_buffer_is_writable(buffer)) {
+          memcpy( (guchar *)map.data, data1,  gst_buffer_get_size( buffer ) );
+          GST_BUFFER_PTS (buffer) = timestamp;
+          GST_BUFFER_DURATION (buffer) = gst_util_uint64_scale_int (1, GST_SECOND, 30);
+          timestamp += GST_BUFFER_DURATION (buffer);
+          g_signal_emit_by_name (appsrc, "push-buffer", buffer, &ret);
+          gst_buffer_unmap(buffer, &map);
+      }else{
+          gst_buffer_unref(buffer);
+          buffer = gst_buffer_new_allocate (NULL, 640*360*3, NULL);
+      }
   }
   /* clean up */
   gst_element_set_state (pipeline, GST_STATE_NULL);
